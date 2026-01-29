@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>goGreen Control Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-orb bg-orb-a"></div>
+    <div class="bg-orb bg-orb-b"></div>
+    <div class="grid-noise"></div>
+
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">goGreen Automation</p>
+        <h1>Control Room</h1>
+        <p class="sub">Run activity safely with preview, preflight checks, templates, scheduling, and live logs.</p>
+        <div class="hero-chips">
+          <span class="chip">Default: dry-run safe mode</span>
+          <span class="chip" id="activityChip">Activity: commits</span>
+          <span class="chip" id="modeChip">Mode: dry-run</span>
+          <span class="chip" id="runStateChip">Run: idle</span>
+        </div>
+      </header>
+
+      <section class="panel guide-panel">
+        <div class="output-header">
+          <h2>How To Use</h2>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-step">
+            <strong>1. Pick token source</strong>
+            <p>Use the .env token checkbox or paste a GitHub token manually in the token field.</p>
+          </div>
+          <div class="guide-step">
+            <strong>2. Paste repository link</strong>
+            <p>Paste your GitHub repository URL. Owner and Repo fields will auto-fill.</p>
+          </div>
+          <div class="guide-step">
+            <strong>3. Choose activity</strong>
+            <p>Select commits, issues, pull requests, reviews, or all. Start with dry-run first.</p>
+          </div>
+          <div class="guide-step">
+            <strong>4. Set counts and dates</strong>
+            <p>Adjust counts, pick random or range dates, and use calendar preview if needed.</p>
+          </div>
+          <div class="guide-step">
+            <strong>5. Run pre-flight</strong>
+            <p>Use Pre-flight to catch missing inputs before execution.</p>
+          </div>
+          <div class="guide-step">
+            <strong>6. Run dry first</strong>
+            <p>Dry-run shows what would happen without writing anything to GitHub or Git.</p>
+          </div>
+          <div class="guide-step guide-warning">
+            <strong>7. For live commits or PRs</strong>
+            <p>This folder must be a real Git repository. If not, live commits and PRs will be blocked.</p>
+          </div>
+          <div class="guide-step">
+            <strong>8. If Git repo is missing</strong>
+            <p>Either clone the real repository into this folder or run: git init, git branch -M main, then add your remote.</p>
+          </div>
+          <div class="guide-step">
+            <strong>9. Use live mode carefully</strong>
+            <p>Switch to live mode only after dry-run looks correct. You will need to type YES to confirm.</p>
+          </div>
+          <div class="guide-step">
+            <strong>10. Review output and history</strong>
+            <p>Watch logs, stop a run if needed, and use Run History to reapply past settings.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="preset-row" aria-label="Quick presets">
+          <button type="button" class="ghost preset" data-preset="safe-commits">Safe commits</button>
+          <button type="button" class="ghost preset" data-preset="safe-all">Safe all</button>
+          <button type="button" class="ghost preset" data-preset="live-issues">Live issues</button>
+          <button type="button" class="ghost preset" data-preset="range-commits">Range commits</button>
+        </div>
+
+        <form id="run-form">
+          <div class="token-bar">
+            <label>
+              GitHub token
+              <input type="password" id="token" name="token" placeholder="ghp_..." autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" />
+            </label>
+            <div class="token-controls">
+              <label class="toggle-inline">
+                <input type="checkbox" id="useEnvToken" name="useEnvToken" checked /> Use token from .env
+              </label>
+              <button type="button" id="toggleTokenBtn" class="ghost">Show</button>
+            </div>
+          </div>
+
+          <div class="actions compact-actions">
+            <button type="button" id="clearSecretsBtn" class="ghost">Clear sensitive fields</button>
+            <p class="mini-note">Tokens are never saved to defaults/history.</p>
+          </div>
+
+          <div class="grid two">
+            <label>
+              Activity type
+              <select id="activityType" name="activityType">
+                <option value="commits">Create backdated commits</option>
+                <option value="issues">Create GitHub issues</option>
+                <option value="prs">Create GitHub pull requests</option>
+                <option value="reviews">Add pull request review comments</option>
+                <option value="all">Run all activity types</option>
+              </select>
+            </label>
+
+            <label>
+              Run mode
+              <select id="runMode" name="runMode">
+                <option value="dry" selected>Dry run (safe, no writes)</option>
+                <option value="live">Live run (real writes)</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid four" id="countsGrid">
+            <label>
+              Commit count
+              <input type="number" id="commitCount" name="commitCount" min="0" value="3" />
+            </label>
+            <label>
+              Issue count
+              <input type="number" id="issueCount" name="issueCount" min="0" value="1" />
+            </label>
+            <label>
+              PR count
+              <input type="number" id="prCount" name="prCount" min="0" value="1" />
+            </label>
+            <label>
+              Review count
+              <input type="number" id="reviewCount" name="reviewCount" min="0" value="1" />
+            </label>
+          </div>
+
+          <div class="grid two">
+            <label>
+              Max per run
+              <input type="number" id="maxPerRun" name="maxPerRun" min="1" value="10" />
+            </label>
+            <label>
+              Max commit date
+              <input type="date" id="maxCommitDate" name="maxCommitDate" />
+            </label>
+          </div>
+
+          <fieldset>
+            <legend>Pre-flight</legend>
+            <div class="actions compact-actions">
+              <button type="button" id="preflightBtn" class="ghost">Run pre-flight check</button>
+              <p id="preflightStatus" class="mini-note">Not checked yet.</p>
+            </div>
+            <div id="preflightList" class="preflight-list"></div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Commit date strategy</legend>
+            <div class="grid two">
+              <label>
+                Strategy
+                <select id="commitStrategy" name="commitStrategy">
+                  <option value="random" selected>Random dates</option>
+                  <option value="range">Range dates</option>
+                </select>
+              </label>
+              <label>
+                Commits per day (range only)
+                <input type="number" id="commitsPerDay" name="commitsPerDay" min="1" value="1" />
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                Start date (range)
+                <input type="date" id="commitStartDate" name="commitStartDate" />
+              </label>
+              <label>
+                End date (range)
+                <input type="date" id="commitEndDate" name="commitEndDate" />
+              </label>
+            </div>
+
+            <div class="grid weekday-grid">
+              <label>Sun <input type="number" min="0" id="weekday0" value="1" /></label>
+              <label>Mon <input type="number" min="0" id="weekday1" value="1" /></label>
+              <label>Tue <input type="number" min="0" id="weekday2" value="1" /></label>
+              <label>Wed <input type="number" min="0" id="weekday3" value="1" /></label>
+              <label>Thu <input type="number" min="0" id="weekday4" value="1" /></label>
+              <label>Fri <input type="number" min="0" id="weekday5" value="1" /></label>
+              <label>Sat <input type="number" min="0" id="weekday6" value="1" /></label>
+            </div>
+
+            <div class="actions compact-actions">
+              <button type="button" id="previewCalendarBtn" class="ghost">Preview calendar plan</button>
+              <p id="calendarSummary" class="mini-note"></p>
+            </div>
+            <div id="calendarPreview" class="calendar-preview"></div>
+          </fieldset>
+
+          <fieldset id="githubFieldset">
+            <legend>GitHub settings (needed for issues/PRs/reviews live mode)</legend>
+            <label>
+              GitHub repository link
+              <input type="url" id="repoUrl" name="repoUrl" placeholder="https://github.com/owner/repo" />
+            </label>
+            <div class="grid three">
+              <label>
+                Owner
+                <input type="text" id="owner" name="owner" placeholder="your-org-or-user" />
+              </label>
+              <label>
+                Repo
+                <input type="text" id="repo" name="repo" placeholder="repository-name" />
+              </label>
+              <label>
+                Base branch
+                <input type="text" id="baseBranch" name="baseBranch" value="main" />
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                Issue labels (comma separated)
+                <input type="text" id="issueLabels" name="issueLabels" placeholder="automation,activity" />
+              </label>
+              <label>
+                Issue assignees (comma separated)
+                <input type="text" id="issueAssignees" name="issueAssignees" placeholder="octocat" />
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                PR labels (comma separated)
+                <input type="text" id="prLabels" name="prLabels" placeholder="automation,activity" />
+              </label>
+              <label>
+                PR assignees (comma separated)
+                <input type="text" id="prAssignees" name="prAssignees" placeholder="octocat" />
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="actions sticky-actions">
+            <button type="submit" id="runBtn">Run Automation</button>
+            <button type="button" id="stopRunBtn" class="ghost" disabled>Stop run</button>
+            <button type="button" id="saveDefaultsBtn" class="ghost">Save as defaults</button>
+            <p id="status">Idle</p>
+          </div>
+
+          <p id="validationHint" class="hint"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="output-header">
+          <h2>Run History</h2>
+          <button type="button" id="clearHistoryBtn" class="ghost">Clear history</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="output-header">
+          <h2>Templates</h2>
+          <div class="output-actions">
+            <label class="sr-only" for="templateType">Template type</label>
+            <select id="templateType" title="Template type">
+              <option value="issue">Issue template</option>
+              <option value="pr">PR template</option>
+            </select>
+            <button type="button" id="loadTemplateBtn" class="ghost">Load</button>
+            <button type="button" id="saveTemplateBtn" class="ghost">Save</button>
+          </div>
+        </div>
+        <textarea id="templateEditor" class="template-editor" placeholder="Template content"></textarea>
+        <p id="templatePreview" class="template-preview"></p>
+      </section>
+
+      <section class="panel">
+        <div class="output-header">
+          <h2>Schedule Task (Windows)</h2>
+        </div>
+        <div class="grid three">
+          <label>
+            Task name
+            <input type="text" id="taskName" value="goGreen-activity" />
+          </label>
+          <label>
+            Days
+            <input type="text" id="taskDays" value="MON,WED,FRI" />
+          </label>
+          <label>
+            Start time
+            <input type="time" id="taskStartTime" value="09:00" />
+          </label>
+        </div>
+        <div class="actions compact-actions">
+          <button type="button" id="scheduleBtn" class="ghost">Create scheduled task</button>
+          <p id="scheduleStatus" class="mini-note"></p>
+        </div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="output-header">
+          <h2>Output</h2>
+          <div class="output-actions">
+            <label class="toggle-inline">
+              <input type="checkbox" id="autoScroll" checked /> Auto-scroll
+            </label>
+            <label class="toggle-inline">
+              <span>Log filter</span>
+              <select id="logFilter" title="Log filter">
+                <option value="all">All</option>
+                <option value="info">Info</option>
+                <option value="warn">Warn</option>
+                <option value="error">Error</option>
+              </select>
+            </label>
+            <button id="copyLogsBtn" type="button" class="ghost">Copy</button>
+            <button id="downloadLogsBtn" type="button" class="ghost">Download</button>
+            <button id="clearBtn" type="button">Clear</button>
+          </div>
+        </div>
+        <div id="output" class="output-log" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <dialog id="confirmDialog" class="confirm-dialog">
+      <form method="dialog" id="confirmForm">
+        <h3>Live Run Confirmation</h3>
+        <p>Type YES to confirm live write operations.</p>
+        <input type="text" id="confirmInput" autocomplete="off" />
+        <div class="actions compact-actions">
+          <button type="submit" value="cancel" class="ghost">Cancel</button>
+          <button type="submit" value="ok" id="confirmRunBtn">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "thomyorke",
+  "version": "1.0.0",
+  "description": "nice dream",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "start:gui": "node gui/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "dotenv": "^17.3.1",
+    "jsonfile": "^6.1.0",
+    "moment": "^2.30.1",
+    "random": "^4.1.0",
+    "simple-git": "^3.25.0"
+  }
+}
